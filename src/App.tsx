@@ -12,6 +12,8 @@ import { useRigStore } from './stores/rigStore';
 import { useUIStore } from './stores/uiStore';
 import { loadImagesFromFiles } from './utils/imageLoader';
 import { PlaybackEngine } from './engine/PlaybackEngine';
+import { exportSkeleton } from './engine/ExportEngine';
+import { downloadJson } from './utils/fileUtils';
 import styles from './App.module.css';
 
 const playbackEngine = new PlaybackEngine();
@@ -38,11 +40,16 @@ function App() {
   const { undo, redo } = useAnimationStore();
   const animation = animations.find((a) => a.id === selectedAnimationId);
 
+  const selectedSkeletonId = useRigStore((s) => s.selectedSkeletonId);
+  const selectedBoneId = useRigStore((s) => s.selectedBoneId);
   const selectedRigAnimationId = useRigStore((s) => s.selectedRigAnimationId);
   const rigCurrentTime = useRigStore((s) => s.currentTime);
   const setRigTime = useRigStore((s) => s.setRigTime);
+  const setKeyframe = useRigStore((s) => s.setKeyframe);
   const getSelectedRigAnimation = useRigStore((s) => s.getSelectedRigAnimation);
+  const getSelectedSkeleton = useRigStore((s) => s.getSelectedSkeleton);
   const rigAnimation = getSelectedRigAnimation();
+  const selectedSkeleton = getSelectedSkeleton();
 
   // Playback engine sync
   useEffect(() => {
@@ -58,14 +65,14 @@ function App() {
           setCurrentFrameIndex(frameIndex);
         });
       } else if (mode === 'rig' && rigAnimation) {
-         playbackEngine.configureRig(
-             rigAnimation.duration,
-             rigAnimation.loop,
-             rigCurrentTime
-         );
-         playbackEngine.playRig((time) => {
-             setRigTime(time);
-         });
+        playbackEngine.configureRig(
+          rigAnimation.duration,
+          rigAnimation.loop,
+          rigCurrentTime
+        );
+        playbackEngine.playRig((time) => {
+          setRigTime(time);
+        });
       }
     } else {
       playbackEngine.stop();
@@ -80,6 +87,50 @@ function App() {
   useEffect(() => {
     setPlaying(false);
   }, [selectedAnimationId, selectedRigAnimationId, mode]);
+
+  // Save project
+  const saveProject = useCallback(() => {
+    const project = {
+      version: 1,
+      animations: useAnimationStore.getState().animations,
+      skeletons: useRigStore.getState().skeletons,
+    };
+    downloadJson(project, 'sprite_animator_project.json');
+  }, []);
+
+  // Load project
+  const loadProject = useCallback(() => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      try {
+        const text = await file.text();
+        const project = JSON.parse(text);
+
+        if (project.version && project.animations) {
+          // Load animations
+          const animStore = useAnimationStore.getState();
+          // Clear existing and load new
+          project.animations.forEach((anim: typeof animations[0]) => {
+            animStore.animations.push(anim);
+          });
+          useAnimationStore.setState({ animations: project.animations });
+        }
+
+        if (project.skeletons) {
+          useRigStore.setState({ skeletons: project.skeletons });
+        }
+      } catch (err) {
+        console.error('Failed to load project:', err);
+        alert('Failed to load project file');
+      }
+    };
+    input.click();
+  }, []);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -98,12 +149,24 @@ function App() {
       } else if (e.ctrlKey && (e.key === 'Z' || (e.key === 'z' && e.shiftKey))) {
         e.preventDefault();
         redo();
+      } else if (e.ctrlKey && e.key === 's') {
+        e.preventDefault();
+        saveProject();
+      } else if (e.ctrlKey && e.key === 'o') {
+        e.preventDefault();
+        loadProject();
       } else if (e.key === ' ') {
         e.preventDefault();
         if (mode === 'frame' && animation && animation.frames.length >= 2) {
-           setPlaying(!isPlaying);
+          setPlaying(!isPlaying);
         } else if (mode === 'rig' && rigAnimation) {
-           setPlaying(!isPlaying);
+          setPlaying(!isPlaying);
+        }
+      } else if (e.key === 'k' || e.key === 'K') {
+        // Add keyframe for selected bone at current time (Rig mode)
+        e.preventDefault();
+        if (mode === 'rig' && selectedSkeletonId && selectedRigAnimationId && selectedBoneId) {
+          setKeyframe(selectedSkeletonId, selectedRigAnimationId, selectedBoneId, rigCurrentTime);
         }
       } else if (e.key === 'ArrowLeft') {
         e.preventDefault();
@@ -114,8 +177,11 @@ function App() {
               ? animation.frames.length - 1
               : currentFrameIndex - 1
           );
+        } else if (mode === 'rig' && rigAnimation) {
+          setPlaying(false);
+          const step = 1000 / 30; // ~33ms step
+          setRigTime(Math.max(0, rigCurrentTime - step));
         }
-        // TODO: Step for rig?
       } else if (e.key === 'ArrowRight') {
         e.preventDefault();
         if (mode === 'frame' && animation && animation.frames.length > 0) {
@@ -125,19 +191,26 @@ function App() {
               ? 0
               : currentFrameIndex + 1
           );
+        } else if (mode === 'rig' && rigAnimation) {
+          setPlaying(false);
+          const step = 1000 / 30;
+          setRigTime(Math.min(rigAnimation.duration, rigCurrentTime + step));
         }
-        // TODO: Step for rig?
       } else if (e.ctrlKey && e.key === 'e') {
         e.preventDefault();
         if (mode === 'frame' && animation && animation.frames.length > 0) {
           setShowExport(true);
+        } else if (mode === 'rig' && selectedSkeleton) {
+          exportSkeleton(selectedSkeleton);
         }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [mode, animation, rigAnimation, isPlaying, currentFrameIndex, undo, redo]);
+  }, [mode, animation, rigAnimation, isPlaying, currentFrameIndex, rigCurrentTime,
+      selectedSkeletonId, selectedRigAnimationId, selectedBoneId, selectedSkeleton,
+      undo, redo, saveProject, loadProject]);
 
   // Handle file drops on the whole app
   const handleFilesDropped = useCallback(
@@ -169,7 +242,7 @@ function App() {
 
   return (
     <DropZone onFilesDropped={handleFilesDropped} className={styles.app}>
-      <MenuBar />
+      <MenuBar onSave={saveProject} onLoad={loadProject} />
       <div className={styles.body}>
         <div className={styles.mainArea}>
           <div className={styles.leftPanel} style={{ width: leftPanelWidth }}>
@@ -199,6 +272,16 @@ function App() {
                   onClick={() => setShowExport(true)}
                 >
                   Export Sprite Sheet
+                </button>
+              </div>
+            )}
+            {mode === 'rig' && selectedSkeleton && (
+              <div className={styles.exportArea}>
+                <button
+                  className={styles.exportBtn}
+                  onClick={() => exportSkeleton(selectedSkeleton)}
+                >
+                  Export Skeleton
                 </button>
               </div>
             )}

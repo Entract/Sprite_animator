@@ -30,6 +30,7 @@ interface RigState {
   // Animation Actions
   createRigAnimation: (skeletonId: string, name?: string) => string;
   selectRigAnimation: (id: string | null) => void;
+  updateRigAnimation: (skeletonId: string, animationId: string, updates: Partial<RigAnimation>) => void;
   setRigTime: (time: number) => void; // Updates bones based on active animation
   setKeyframe: (skeletonId: string, animationId: string, boneId: string, time: number) => void;
   deleteKeyframe: (skeletonId: string, animationId: string, boneId: string, time: number) => void;
@@ -282,6 +283,20 @@ export const useRigStore = create<RigState & HistoryState>(
 
     selectRigAnimation: (id) => {
         set({ selectedRigAnimationId: id, currentTime: 0 });
+    },
+
+    updateRigAnimation: (skeletonId, animationId, updates) => {
+        set(state => ({
+            skeletons: state.skeletons.map(s => {
+                if (s.id !== skeletonId) return s;
+                return {
+                    ...s,
+                    rigAnimations: s.rigAnimations.map(a =>
+                        a.id === animationId ? { ...a, ...updates } : a
+                    )
+                };
+            })
+        }));
     },
 
     setRigTime: (time) => {

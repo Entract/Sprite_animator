@@ -2,7 +2,12 @@ import { useUIStore } from '../../stores/uiStore';
 import { useAnimationStore } from '../../stores/animationStore';
 import styles from './MenuBar.module.css';
 
-export function MenuBar() {
+interface MenuBarProps {
+  onSave: () => void;
+  onLoad: () => void;
+}
+
+export function MenuBar({ onSave, onLoad }: MenuBarProps) {
   const mode = useUIStore((s) => s.mode);
   const setMode = useUIStore((s) => s.setMode);
   const { undo, redo, canUndo, canRedo } = useAnimationStore();
@@ -17,6 +22,13 @@ export function MenuBar() {
       <div className={styles.left}>
         <span className={styles.title}>Sprite Animator</span>
         <div className={styles.actions}>
+          <button onClick={onSave} title="Save Project (Ctrl+S)">
+            Save
+          </button>
+          <button onClick={onLoad} title="Load Project (Ctrl+O)">
+            Load
+          </button>
+          <span className={styles.separator} />
           <button onClick={undo} disabled={!canUndo} title="Undo (Ctrl+Z)">
             Undo
           </button>
@@ -34,7 +46,7 @@ export function MenuBar() {
           <button
             onClick={toggleOnionSkin}
             className={onionSkin.enabled ? styles.active : ''}
-            title="Toggle Onion Skin"
+            title="Toggle Onion Skin (Frame Mode)"
           >
             Onion
           </button>

@@ -1,9 +1,10 @@
-import { Group, Circle, Line, Image as KonvaImage } from 'react-konva';
+import { Group, Circle, Line, Image as KonvaImage, Arc } from 'react-konva';
 import { useRigStore } from '../../stores/rigStore';
 import type { Bone, Slot, Skin, Attachment } from '../../types/skeleton';
 import type { KonvaEventObject } from 'konva/lib/Node';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { getCachedImage } from '../../utils/imageLoader';
+import { radToDeg } from '../../utils/math';
 
 export function SkeletonRenderer() {
   const selectedSkeleton = useRigStore(s => s.getSelectedSkeleton());
@@ -13,15 +14,14 @@ export function SkeletonRenderer() {
 
   if (!selectedSkeleton) return null;
 
-  // Find roots
   const roots = selectedSkeleton.bones.filter(b => !b.parentId);
 
   return (
     <Group>
       {roots.map(bone => (
-        <BoneView 
-          key={bone.id} 
-          bone={bone} 
+        <BoneView
+          key={bone.id}
+          bone={bone}
           allBones={selectedSkeleton.bones}
           slots={selectedSkeleton.slots}
           skins={selectedSkeleton.skins}
@@ -47,8 +47,10 @@ interface BoneViewProps {
 function BoneView({ bone, allBones, slots, skins, selectedBoneId, onUpdate, onSelect }: BoneViewProps) {
   const children = allBones.filter(b => b.parentId === bone.id);
   const isSelected = bone.id === selectedBoneId;
+  const rotateRef = useRef<{ startAngle: number; boneStartRotation: number } | null>(null);
 
-  const handleDragEnd = (e: KonvaEventObject<DragEvent>) => {
+  const handleDragMove = (e: KonvaEventObject<DragEvent>) => {
+    // Live update while dragging
     onUpdate(bone.id, {
       x: e.target.x(),
       y: e.target.y(),
@@ -60,9 +62,64 @@ function BoneView({ bone, allBones, slots, skins, selectedBoneId, onUpdate, onSe
     onSelect(bone.id);
   };
 
+  // Rotation handle drag
+  const handleRotateStart = (e: KonvaEventObject<MouseEvent>) => {
+    e.cancelBubble = true;
+    const stage = e.target.getStage();
+    if (!stage) return;
+
+    const pos = stage.getPointerPosition();
+    if (!pos) return;
+
+    // Get bone world position (approximate - would need proper transform chain)
+    const group = e.target.getParent();
+    if (!group) return;
+
+    const absPos = group.getAbsolutePosition();
+    const dx = pos.x - absPos.x;
+    const dy = pos.y - absPos.y;
+    const startAngle = Math.atan2(dy, dx);
+
+    rotateRef.current = {
+      startAngle,
+      boneStartRotation: bone.rotation
+    };
+  };
+
+  const handleRotateMove = (e: KonvaEventObject<DragEvent>) => {
+    if (!rotateRef.current) return;
+    e.cancelBubble = true;
+
+    const stage = e.target.getStage();
+    if (!stage) return;
+
+    const pos = stage.getPointerPosition();
+    if (!pos) return;
+
+    const group = e.target.getParent();
+    if (!group) return;
+
+    const absPos = group.getAbsolutePosition();
+    const dx = pos.x - absPos.x;
+    const dy = pos.y - absPos.y;
+    const currentAngle = Math.atan2(dy, dx);
+
+    const deltaAngle = radToDeg(currentAngle - rotateRef.current.startAngle);
+    const newRotation = rotateRef.current.boneStartRotation + deltaAngle;
+
+    onUpdate(bone.id, { rotation: newRotation });
+  };
+
+  const handleRotateEnd = () => {
+    rotateRef.current = null;
+  };
+
   // Find attachment
   const slot = slots.find(s => s.boneId === bone.id);
   const attachment = slot?.attachment ? skins.find(s => s.name === 'default')?.attachments[slot.id] : null;
+
+  const boneColor = isSelected ? '#00e5ff' : '#888';
+  const jointColor = isSelected ? '#00e5ff' : '#666';
 
   return (
     <Group
@@ -72,43 +129,98 @@ function BoneView({ bone, allBones, slots, skins, selectedBoneId, onUpdate, onSe
       scaleX={bone.scaleX}
       scaleY={bone.scaleY}
       draggable
-      onDragEnd={handleDragEnd}
+      onDragMove={handleDragMove}
       onClick={handleClick}
     >
-      {/* Attachment / Sprite */}
+      {/* Attachment / Sprite (rendered behind bone) */}
       {attachment && <AttachmentView attachment={attachment} />}
 
-      {/* Bone Visual */}
-      <Line 
-        points={[0, 0, bone.length, 0]} 
-        stroke={isSelected ? '#00e5ff' : '#aaa'} 
-        strokeWidth={isSelected ? 4 : 2}
-        lineCap="round"
+      {/* Bone shape - tapered look */}
+      <Line
+        points={[
+          0, -4,
+          bone.length * 0.3, -2,
+          bone.length, 0,
+          bone.length * 0.3, 2,
+          0, 4,
+        ]}
+        closed
+        fill={isSelected ? 'rgba(0, 229, 255, 0.2)' : 'rgba(136, 136, 136, 0.15)'}
+        stroke={boneColor}
+        strokeWidth={isSelected ? 2 : 1}
       />
-      
-      {/* Joint/Pivot */}
-      <Circle 
-        radius={isSelected ? 6 : 4} 
-        fill={isSelected ? '#00e5ff' : '#666'} 
+
+      {/* Joint circle at origin */}
+      <Circle
+        radius={isSelected ? 8 : 6}
+        fill={jointColor}
+        stroke="white"
+        strokeWidth={2}
+        shadowColor="black"
+        shadowBlur={isSelected ? 8 : 0}
+        shadowOpacity={0.5}
+      />
+
+      {/* Rotation handle (only for selected bone) */}
+      {isSelected && (
+        <Group x={bone.length} y={0}>
+          {/* Rotation arc indicator */}
+          <Arc
+            innerRadius={15}
+            outerRadius={20}
+            angle={90}
+            rotation={-45}
+            fill="rgba(0, 229, 255, 0.3)"
+            stroke="#00e5ff"
+            strokeWidth={1}
+          />
+          {/* Draggable rotation handle */}
+          <Circle
+            x={18}
+            y={0}
+            radius={8}
+            fill="#00e5ff"
+            stroke="white"
+            strokeWidth={2}
+            draggable
+            onDragStart={handleRotateStart}
+            onDragMove={handleRotateMove}
+            onDragEnd={handleRotateEnd}
+            onMouseEnter={(e) => {
+              const stage = e.target.getStage();
+              if (stage) stage.container().style.cursor = 'grab';
+            }}
+            onMouseLeave={(e) => {
+              const stage = e.target.getStage();
+              if (stage) stage.container().style.cursor = 'default';
+            }}
+          />
+        </Group>
+      )}
+
+      {/* Tip marker */}
+      <Circle
+        x={bone.length}
+        y={0}
+        radius={4}
+        fill={boneColor}
         stroke="white"
         strokeWidth={1}
       />
 
-      {/* Tip (visual aid for direction) */}
-      <Circle 
-        x={bone.length} 
-        y={0} 
-        radius={3} 
-        fill={isSelected ? '#00e5ff' : '#888'} 
-        opacity={0.6} 
-      />
+      {/* Bone name label (only for selected) */}
+      {isSelected && (
+        <Group x={bone.length / 2} y={-15}>
+          {/* Background for readability */}
+        </Group>
+      )}
 
       {/* Children */}
       {children.map(child => (
-        <BoneView 
-          key={child.id} 
-          bone={child} 
-          allBones={allBones} 
+        <BoneView
+          key={child.id}
+          bone={child}
+          allBones={allBones}
           slots={slots}
           skins={skins}
           selectedBoneId={selectedBoneId}
@@ -143,7 +255,7 @@ function AttachmentView({ attachment }: { attachment: Attachment }) {
       scaleY={attachment.scaleY}
       offsetX={attachment.width / 2}
       offsetY={attachment.height / 2}
-      // Opacity or other props?
+      opacity={0.9}
     />
   );
 }
