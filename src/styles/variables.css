@@ -1,0 +1,47 @@
+:root {
+  --bg-primary: #1a1a2e;
+  --bg-secondary: #16213e;
+  --bg-tertiary: #0f3460;
+  --bg-panel: #1e1e3a;
+  --bg-input: #12122a;
+  --bg-hover: #2a2a4e;
+  --bg-selected: #3a3a6e;
+  --bg-button: #2a2a4e;
+  --bg-button-hover: #3a3a6e;
+  --bg-button-active: #4a4a8e;
+
+  --border-color: #2a2a4e;
+  --border-light: #3a3a6e;
+
+  --text-primary: #e0e0f0;
+  --text-secondary: #a0a0c0;
+  --text-muted: #606080;
+  --text-accent: #64b5f6;
+
+  --accent: #536dfe;
+  --accent-hover: #6979ff;
+  --accent-dim: #3a4cb8;
+  --success: #4caf50;
+  --warning: #ff9800;
+  --danger: #f44336;
+  --danger-hover: #ff5252;
+
+  --onion-prev: rgba(255, 80, 80, 0.4);
+  --onion-next: rgba(80, 255, 80, 0.4);
+
+  --panel-min-width: 200px;
+  --panel-left-width: 240px;
+  --panel-right-width: 260px;
+  --timeline-height: 200px;
+  --menubar-height: 40px;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+
+  --font-mono: 'Consolas', 'Monaco', 'Courier New', monospace;
+  --font-ui: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.25s ease;
+}

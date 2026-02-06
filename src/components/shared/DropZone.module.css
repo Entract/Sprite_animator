@@ -1,0 +1,30 @@
+.dropZone {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.dragging {
+  outline: 2px dashed var(--accent);
+  outline-offset: -2px;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(83, 109, 254, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.overlayText {
+  background: var(--accent);
+  color: white;
+  padding: 12px 24px;
+  border-radius: var(--radius-lg);
+  font-size: 16px;
+  font-weight: 600;
+}

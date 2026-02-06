@@ -1,0 +1,48 @@
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.controls button {
+  width: 30px;
+  height: 26px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.playing {
+  background: var(--accent-dim) !important;
+  border-color: var(--accent) !important;
+}
+
+.separator {
+  width: 1px;
+  height: 20px;
+  background: var(--border-color);
+  margin: 0 6px;
+}
+
+.frameInfo {
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--text-primary);
+  min-width: 60px;
+  text-align: center;
+}
+
+.fpsLabel {
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.fpsValue {
+  font-size: 12px;
+  font-family: var(--font-mono);
+  color: var(--text-accent);
+}

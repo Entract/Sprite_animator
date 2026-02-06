@@ -1,0 +1,20 @@
+.panel {
+  height: 100%;
+  background: var(--bg-panel);
+  overflow: hidden;
+}
+
+.placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-muted);
+  gap: 4px;
+}
+
+.subtitle {
+  font-size: 11px;
+  opacity: 0.6;
+}

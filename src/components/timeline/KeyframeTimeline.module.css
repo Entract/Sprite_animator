@@ -1,0 +1,126 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  background: var(--bg-panel);
+}
+
+.controls {
+  padding: 4px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.timelineArea {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  position: relative;
+}
+
+.trackLabels {
+  width: 150px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border-color);
+  background: var(--bg-panel);
+  z-index: 2;
+  overflow-y: hidden; /* Synced with scroll */
+}
+
+.trackLabelHeader {
+  height: 24px;
+  border-bottom: 1px solid var(--border-color);
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-input);
+}
+
+.trackLabelRow {
+  height: 24px;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  font-size: 12px;
+  border-bottom: 1px solid var(--border-color);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.trackContent {
+  flex: 1;
+  overflow: auto;
+  position: relative;
+  /* background-image: linear-gradient(to right, var(--border-color) 1px, transparent 1px);
+  background-size: 100px 100%; */
+}
+
+.ruler {
+  height: 24px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-input);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  cursor: pointer;
+}
+
+.trackRow {
+  height: 24px;
+  border-bottom: 1px solid var(--border-color);
+  position: relative;
+  /* striped background */
+}
+
+.trackRow:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.keyframe {
+  position: absolute;
+  top: 6px;
+  width: 12px;
+  height: 12px;
+  transform: rotate(45deg);
+  background: var(--accent);
+  border: 1px solid white;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.keyframe:hover {
+  transform: rotate(45deg) scale(1.2);
+}
+
+.keyframe.selected {
+  background: #fff;
+  border-color: var(--accent);
+}
+
+.scrubber {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: red;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.scrubberHead {
+  position: absolute;
+  top: 0;
+  left: -5px;
+  width: 11px;
+  height: 12px;
+  background: red;
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}

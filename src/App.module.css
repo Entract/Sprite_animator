@@ -1,0 +1,66 @@
+.app {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+.mainArea {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.leftPanel {
+  flex-shrink: 0;
+  overflow: hidden;
+  border-right: 1px solid var(--border-color);
+}
+
+.center {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+}
+
+.rightPanel {
+  flex-shrink: 0;
+  overflow: hidden;
+  border-left: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+}
+
+.timeline {
+  flex-shrink: 0;
+  border-top: 1px solid var(--border-color);
+  overflow: hidden;
+}
+
+.exportArea {
+  padding: 12px;
+  border-top: 1px solid var(--border-color);
+  margin-top: auto;
+}
+
+.exportBtn {
+  width: 100%;
+  background: var(--accent) !important;
+  color: white;
+  font-weight: 600;
+  padding: 8px;
+  font-size: 13px;
+  border-radius: var(--radius-md);
+}
+
+.exportBtn:hover {
+  background: var(--accent-hover) !important;
+}

@@ -1,0 +1,79 @@
+.menuBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--menubar-height);
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  padding: 0 12px;
+  gap: 12px;
+}
+
+.left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.title {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text-accent);
+  letter-spacing: 0.5px;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.actions button {
+  font-size: 12px;
+  padding: 3px 10px;
+}
+
+.separator {
+  width: 1px;
+  height: 20px;
+  background: var(--border-color);
+  margin: 0 4px;
+}
+
+.active {
+  background: var(--accent-dim) !important;
+  border-color: var(--accent) !important;
+  color: white !important;
+}
+
+.modeSwitch {
+  display: flex;
+  gap: 0;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+}
+
+.modeBtn,
+.modeActive {
+  font-size: 12px;
+  padding: 4px 16px;
+  border: none;
+  border-radius: 0;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.modeBtn {
+  background: var(--bg-button);
+  color: var(--text-secondary);
+}
+
+.modeBtn:hover {
+  background: var(--bg-button-hover);
+}
+
+.modeActive {
+  background: var(--accent);
+  color: white;
+}

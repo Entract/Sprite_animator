@@ -1,0 +1,20 @@
+.resizer {
+  flex-shrink: 0;
+  background: var(--border-color);
+  transition: background var(--transition-fast);
+  z-index: 10;
+}
+
+.resizer:hover {
+  background: var(--accent);
+}
+
+.horizontal {
+  width: 3px;
+  cursor: col-resize;
+}
+
+.vertical {
+  height: 3px;
+  cursor: row-resize;
+}
