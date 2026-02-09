@@ -1,7 +1,6 @@
 import { Group, Circle, Line, Image as KonvaImage, Arc } from 'react-konva';
 import { useRigStore } from '../../stores/rigStore';
-import type { Bone, Slot, Skin, Attachment } from '../../types/skeleton';
-import type { KonvaEventObject } from 'konva/lib/Node';
+import type { Bone, Slot, Skin, Attachment, IKConstraint } from '../../types/skeleton';
 import { useEffect, useState, useRef } from 'react';
 import { getCachedImage } from '../../utils/imageLoader';
 import { radToDeg } from '../../utils/math';
@@ -9,8 +8,11 @@ import { radToDeg } from '../../utils/math';
 export function SkeletonRenderer() {
   const selectedSkeleton = useRigStore(s => s.getSelectedSkeleton());
   const selectedBoneId = useRigStore(s => s.selectedBoneId);
+  const selectedIKConstraintId = useRigStore(s => s.selectedIKConstraintId);
   const updateBone = useRigStore(s => s.updateBone);
+  const updateIKConstraint = useRigStore(s => s.updateIKConstraint);
   const selectBone = useRigStore(s => s.selectBone);
+  const selectIKConstraint = useRigStore(s => s.selectIKConstraint);
 
   if (!selectedSkeleton) return null;
 
@@ -28,6 +30,17 @@ export function SkeletonRenderer() {
           selectedBoneId={selectedBoneId}
           onUpdate={(id, updates) => updateBone(selectedSkeleton.id, id, updates)}
           onSelect={selectBone}
+        />
+      ))}
+
+      {/* IK Target Handles */}
+      {selectedSkeleton.ikConstraints.map(constraint => (
+        <IKTargetHandle
+          key={constraint.id}
+          constraint={constraint}
+          isSelected={constraint.id === selectedIKConstraintId}
+          onUpdate={(updates) => updateIKConstraint(selectedSkeleton.id, constraint.id, updates)}
+          onSelect={() => selectIKConstraint(constraint.id)}
         />
       ))}
     </Group>
@@ -49,7 +62,7 @@ function BoneView({ bone, allBones, slots, skins, selectedBoneId, onUpdate, onSe
   const isSelected = bone.id === selectedBoneId;
   const rotateRef = useRef<{ startAngle: number; boneStartRotation: number } | null>(null);
 
-  const handleDragMove = (e: KonvaEventObject<DragEvent>) => {
+  const handleDragMove = (e: any) => {
     // Live update while dragging
     onUpdate(bone.id, {
       x: e.target.x(),
@@ -57,13 +70,13 @@ function BoneView({ bone, allBones, slots, skins, selectedBoneId, onUpdate, onSe
     });
   };
 
-  const handleClick = (e: KonvaEventObject<MouseEvent>) => {
+  const handleClick = (e: any) => {
     e.cancelBubble = true;
     onSelect(bone.id);
   };
 
   // Rotation handle drag
-  const handleRotateStart = (e: KonvaEventObject<MouseEvent>) => {
+  const handleRotateStart = (e: any) => {
     e.cancelBubble = true;
     const stage = e.target.getStage();
     if (!stage) return;
@@ -86,7 +99,7 @@ function BoneView({ bone, allBones, slots, skins, selectedBoneId, onUpdate, onSe
     };
   };
 
-  const handleRotateMove = (e: KonvaEventObject<DragEvent>) => {
+  const handleRotateMove = (e: any) => {
     if (!rotateRef.current) return;
     e.cancelBubble = true;
 
@@ -257,5 +270,91 @@ function AttachmentView({ attachment }: { attachment: Attachment }) {
       offsetY={attachment.height / 2}
       opacity={0.9}
     />
+  );
+}
+
+interface IKTargetHandleProps {
+  constraint: IKConstraint;
+  isSelected: boolean;
+  onUpdate: (updates: Partial<IKConstraint>) => void;
+  onSelect: () => void;
+}
+
+function IKTargetHandle({ constraint, isSelected, onUpdate, onSelect }: IKTargetHandleProps) {
+  if (!constraint.enabled) return null;
+
+  const handleDrag = (e: any) => {
+    onUpdate({
+      targetX: e.target.x(),
+      targetY: e.target.y(),
+    });
+  };
+
+  const handleClick = (e: any) => {
+    e.cancelBubble = true;
+    onSelect();
+  };
+
+  const targetColor = isSelected ? '#ff6b6b' : '#ff9f43';
+  const targetSize = isSelected ? 14 : 12;
+
+  return (
+    <Group>
+      {/* Target crosshair */}
+      <Line
+        points={[constraint.targetX - 20, constraint.targetY, constraint.targetX + 20, constraint.targetY]}
+        stroke={targetColor}
+        strokeWidth={1}
+        dash={[4, 4]}
+        opacity={0.6}
+      />
+      <Line
+        points={[constraint.targetX, constraint.targetY - 20, constraint.targetX, constraint.targetY + 20]}
+        stroke={targetColor}
+        strokeWidth={1}
+        dash={[4, 4]}
+        opacity={0.6}
+      />
+
+      {/* Main target handle - draggable */}
+      <Circle
+        x={constraint.targetX}
+        y={constraint.targetY}
+        radius={targetSize}
+        fill={targetColor}
+        stroke="white"
+        strokeWidth={2}
+        shadowColor={targetColor}
+        shadowBlur={isSelected ? 12 : 0}
+        shadowOpacity={0.6}
+        draggable
+        onDragMove={handleDrag}
+        onClick={handleClick}
+        onMouseEnter={(e) => {
+          const stage = e.target.getStage();
+          if (stage) stage.container().style.cursor = 'move';
+        }}
+        onMouseLeave={(e) => {
+          const stage = e.target.getStage();
+          if (stage) stage.container().style.cursor = 'default';
+        }}
+      />
+
+      {/* Inner dot */}
+      <Circle
+        x={constraint.targetX}
+        y={constraint.targetY}
+        radius={4}
+        fill="white"
+        listening={false}
+      />
+
+      {/* IK label */}
+      {isSelected && (
+        <Group x={constraint.targetX + 20} y={constraint.targetY - 10}>
+          {/* Label would go here */}
+        </Group>
+      )}
+    </Group>
   );
 }

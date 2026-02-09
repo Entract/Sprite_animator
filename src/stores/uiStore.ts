@@ -19,9 +19,18 @@ interface ViewportState {
   panY: number;
 }
 
+export type ToolType = 'select' | 'fuzzy' | 'brush' | 'eraser' | 'ai-remove' | 'smart-eraser' | 'box-select' | 'keep-island';
+
 interface UIState {
   mode: EditorMode;
   setMode: (mode: EditorMode) => void;
+
+  activeTool: ToolType;
+  setActiveTool: (tool: ToolType) => void;
+  fuzzyThreshold: number;
+  setFuzzyThreshold: (threshold: number) => void;
+  brushSize: number;
+  setBrushSize: (size: number) => void;
 
   selectedFrameId: string | null;
   selectFrame: (id: string | null) => void;
@@ -55,6 +64,13 @@ interface UIState {
 export const useUIStore = create<UIState>((set) => ({
   mode: 'frame',
   setMode: (mode) => set({ mode }),
+
+  activeTool: 'select',
+  setActiveTool: (activeTool) => set({ activeTool }),
+  fuzzyThreshold: 20,
+  setFuzzyThreshold: (fuzzyThreshold) => set({ fuzzyThreshold }),
+  brushSize: 5,
+  setBrushSize: (brushSize) => set({ brushSize: Math.max(1, Math.min(100, brushSize)) }),
 
   selectedFrameId: null,
   selectFrame: (id) => set({ selectedFrameId: id }),

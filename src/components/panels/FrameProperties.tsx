@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useAnimationStore } from '../../stores/animationStore';
 import { useUIStore } from '../../stores/uiStore';
 import styles from './FrameProperties.module.css';
@@ -8,11 +9,14 @@ export function FrameProperties() {
   const updateFrame = useAnimationStore((s) => s.updateFrame);
   const setFps = useAnimationStore((s) => s.setFps);
   const setLoop = useAnimationStore((s) => s.setLoop);
+  const trimAnimation = useAnimationStore((s) => s.trimAnimation);
   const selectedFrameId = useUIStore((s) => s.selectedFrameId);
   const onionSkin = useUIStore((s) => s.onionSkin);
   const setOnionSkinPrevCount = useUIStore((s) => s.setOnionSkinPrevCount);
   const setOnionSkinNextCount = useUIStore((s) => s.setOnionSkinNextCount);
   const setOnionSkinOpacity = useUIStore((s) => s.setOnionSkinOpacity);
+
+  const [isTrimming, setIsTrimming] = useState(false);
 
   const animation = animations.find((a) => a.id === selectedAnimationId);
   const frame = animation?.frames.find((f) => f.id === selectedFrameId);
@@ -24,6 +28,16 @@ export function FrameProperties() {
       </div>
     );
   }
+
+  const handleTrim = async () => {
+    if (!animation) return;
+    setIsTrimming(true);
+    try {
+      await trimAnimation(animation.id);
+    } finally {
+      setIsTrimming(false);
+    }
+  };
 
   return (
     <div className={styles.container}>
@@ -51,6 +65,13 @@ export function FrameProperties() {
           <label>Frames</label>
           <span className={styles.value}>{animation.frames.length}</span>
         </div>
+        <button 
+          className={styles.trimBtn} 
+          onClick={handleTrim}
+          disabled={isTrimming || animation.frames.length === 0}
+        >
+          {isTrimming ? 'Trimming...' : 'Trim to Content'}
+        </button>
       </div>
 
       {frame && (

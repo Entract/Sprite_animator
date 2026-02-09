@@ -20,6 +20,18 @@ export interface Bone {
   pivotY: number;
 }
 
+export interface IKConstraint {
+  id: string;
+  name: string;
+  targetBoneId: string;    // The bone at the end of the chain (e.g., hand)
+  chainLength: number;      // Number of bones in chain (typically 2)
+  targetX: number;          // World target position
+  targetY: number;
+  bendPositive: boolean;    // Which way the joint bends (elbow direction)
+  mix: number;              // 0-1, how much IK affects the bones
+  enabled: boolean;
+}
+
 export interface Slot {
   id: string;
   boneId: string;
@@ -61,6 +73,18 @@ export interface AnimationTrack {
   keyframes: Keyframe[];
 }
 
+export interface IKKeyframe {
+  time: number;
+  targetX: number;
+  targetY: number;
+  easing: EasingType;
+}
+
+export interface IKAnimationTrack {
+  constraintId: string;
+  keyframes: IKKeyframe[];
+}
+
 export interface RigAnimation {
   id: string;
   name: string;
@@ -68,6 +92,7 @@ export interface RigAnimation {
   fps: number;
   loop: boolean;
   tracks: AnimationTrack[];
+  ikTracks?: IKAnimationTrack[];
 }
 
 export interface Skeleton {
@@ -76,5 +101,6 @@ export interface Skeleton {
   bones: Bone[];
   slots: Slot[];
   skins: Skin[];
+  ikConstraints: IKConstraint[];
   rigAnimations: RigAnimation[];
 }

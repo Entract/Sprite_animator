@@ -3,11 +3,20 @@ import { useAnimationStore } from '../../stores/animationStore';
 import styles from './MenuBar.module.css';
 
 interface MenuBarProps {
-  onSave: () => void;
-  onLoad: () => void;
+  onSaveSession: () => void;
+  onLoadSession: () => void;
+  onDeleteSession: () => void;
+  onExportFile: () => void;
+  onImportFile: () => void;
 }
 
-export function MenuBar({ onSave, onLoad }: MenuBarProps) {
+export function MenuBar({
+  onSaveSession,
+  onLoadSession,
+  onDeleteSession,
+  onExportFile,
+  onImportFile,
+}: MenuBarProps) {
   const mode = useUIStore((s) => s.mode);
   const setMode = useUIStore((s) => s.setMode);
   const { undo, redo, canUndo, canRedo } = useAnimationStore();
@@ -20,13 +29,26 @@ export function MenuBar({ onSave, onLoad }: MenuBarProps) {
   return (
     <div className={styles.menuBar}>
       <div className={styles.left}>
-        <span className={styles.title}>Sprite Animator</span>
+        <div className={styles.branding}>
+          <img src="/logo.png" className={styles.logo} alt="MotionWeaver2D Logo" />
+          <span className={styles.title}>MotionWeaver<span className={styles.titleAccent}>2D</span></span>
+        </div>
         <div className={styles.actions}>
-          <button onClick={onSave} title="Save Project (Ctrl+S)">
-            Save
+          <button onClick={onSaveSession} title="Save Named Session (Ctrl+S)">
+            Save Session
           </button>
-          <button onClick={onLoad} title="Load Project (Ctrl+O)">
-            Load
+          <button onClick={onLoadSession} title="Load Named Session (Ctrl+O)">
+            Load Session
+          </button>
+          <button onClick={onDeleteSession} title="Delete Named Session">
+            Delete Session
+          </button>
+          <span className={styles.separator} />
+          <button onClick={onExportFile} title="Export Session JSON">
+            Export File
+          </button>
+          <button onClick={onImportFile} title="Import Session JSON">
+            Import File
           </button>
           <span className={styles.separator} />
           <button onClick={undo} disabled={!canUndo} title="Undo (Ctrl+Z)">
@@ -67,6 +89,12 @@ export function MenuBar({ onSave, onLoad }: MenuBarProps) {
           onClick={() => setMode('rig')}
         >
           Rig Mode
+        </button>
+        <button
+          className={mode === 'motion-lab' ? styles.modeActive : styles.modeBtn}
+          onClick={() => setMode('motion-lab')}
+        >
+          Motion Lab
         </button>
       </div>
     </div>

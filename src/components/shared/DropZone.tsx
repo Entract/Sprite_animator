@@ -3,12 +3,11 @@ import styles from './DropZone.module.css';
 
 interface DropZoneProps {
   onFilesDropped: (files: File[]) => void;
-  accept?: string;
   children: React.ReactNode;
   className?: string;
 }
 
-export function DropZone({ onFilesDropped, accept = 'image/png', children, className }: DropZoneProps) {
+export function DropZone({ onFilesDropped, children, className }: DropZoneProps) {
   const [isDragging, setIsDragging] = useState(false);
   const dragCountRef = useRef(0);
 
@@ -43,17 +42,20 @@ export function DropZone({ onFilesDropped, accept = 'image/png', children, class
       setIsDragging(false);
 
       const files = Array.from(e.dataTransfer.files).filter((f) => {
-        if (accept === 'image/png') {
-          return f.type === 'image/png' || f.name.toLowerCase().endsWith('.png');
-        }
-        return f.type.startsWith('image/');
+        const lowerName = f.name.toLowerCase();
+        return (
+          f.type === 'image/png' ||
+          lowerName.endsWith('.png') ||
+          f.type === 'video/mp4' ||
+          lowerName.endsWith('.mp4')
+        );
       });
 
       if (files.length > 0) {
         onFilesDropped(files);
       }
     },
-    [onFilesDropped, accept]
+    [onFilesDropped]
   );
 
   return (
@@ -67,7 +69,7 @@ export function DropZone({ onFilesDropped, accept = 'image/png', children, class
       {children}
       {isDragging && (
         <div className={styles.overlay}>
-          <div className={styles.overlayText}>Drop PNG files here</div>
+          <div className={styles.overlayText}>Drop PNG or MP4 files here</div>
         </div>
       )}
     </div>

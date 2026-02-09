@@ -9,27 +9,17 @@ interface GridBackgroundProps {
   showGrid: boolean;
 }
 
-const CHECKER_SIZE = 16;
 const GRID_SIZE = 64;
 
 export function GridBackground({ width, height, zoom, panX, panY, showGrid }: GridBackgroundProps) {
   return (
     <>
-      {/* Checkerboard transparency pattern */}
+      {/* Solid Slate Background */}
       <Shape
         sceneFunc={(context, shape) => {
           const ctx = context._context;
-          const step = CHECKER_SIZE;
-          const cols = Math.ceil(width / step) + 1;
-          const rows = Math.ceil(height / step) + 1;
-
-          for (let row = 0; row < rows; row++) {
-            for (let col = 0; col < cols; col++) {
-              ctx.fillStyle = (row + col) % 2 === 0 ? '#2a2a3e' : '#222236';
-              ctx.fillRect(col * step, row * step, step, step);
-            }
-          }
-
+          ctx.fillStyle = '#2a2d2e'; // Professional light slate/grey
+          ctx.fillRect(0, 0, width, height);
           context.fillStrokeShape(shape);
         }}
         listening={false}
@@ -44,7 +34,7 @@ export function GridBackground({ width, height, zoom, panX, panY, showGrid }: Gr
 
             if (step < 8) return;
 
-            ctx.strokeStyle = 'rgba(100, 100, 140, 0.15)';
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)'; // Nice white grid
             ctx.lineWidth = 1;
             ctx.beginPath();
 
@@ -64,7 +54,7 @@ export function GridBackground({ width, height, zoom, panX, panY, showGrid }: Gr
             // Origin crosshair
             const ox = panX * zoom + width / 2;
             const oy = panY * zoom + height / 2;
-            ctx.strokeStyle = 'rgba(100, 181, 246, 0.3)';
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
             ctx.lineWidth = 1;
             ctx.beginPath();
             ctx.moveTo(ox, 0);

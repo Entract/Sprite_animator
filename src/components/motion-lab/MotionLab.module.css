@@ -1,0 +1,232 @@
+.container {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.leftPanel, .rightPanel {
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+  border-left: 1px solid var(--border-color);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+}
+
+.leftPanel {
+  width: 300px;
+  border-left: none;
+}
+
+.rightPanel {
+  width: 320px;
+  border-right: none;
+}
+
+.center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: var(--bg-primary);
+}
+
+.previewArea {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    linear-gradient(45deg, #222 25%, transparent 25%, transparent 75%, #222 75%, #222),
+    linear-gradient(45deg, #222 25%, transparent 25%, transparent 75%, #222 75%, #222);
+  background-color: #1a1a1a;
+  background-size: 20px 20px;
+  background-position: 0 0, 10px 10px;
+}
+
+.dropTarget {
+  width: 100%;
+  height: 200px;
+  border: 2px dashed var(--border-color);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  transition: all var(--transition-normal);
+  background: var(--bg-input);
+  cursor: pointer;
+}
+
+.dropTarget:hover {
+  border-color: var(--accent);
+  background: var(--bg-hover);
+}
+
+.dropTarget img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.section h3 {
+  font-size: 14px;
+  color: var(--accent);
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field label {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.input, .textarea, .select {
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 8px;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 13px;
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.generateBtn {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background var(--transition-fast);
+}
+
+.generateBtn:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.generateBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.videoPreview {
+  max-width: 90%;
+  max-height: 80%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  border-radius: var(--radius-md);
+}
+
+.videoContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+}
+
+.videoActions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.actionBtn {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 120, 212, 0.3);
+}
+
+.actionBtn:hover {
+  background: var(--accent-hover);
+}
+
+.downloadLink {
+  color: var(--text-secondary);
+  font-size: 13px;
+  text-decoration: none;
+  padding: 10px 20px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+}
+
+.downloadLink:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.loading {
+  color: var(--accent);
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.historyGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+  gap: 8px;
+}
+
+.historyItem {
+  aspect-ratio: 1;
+  background: var(--bg-input);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+}
+
+.historyItem video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.historyItem:hover {
+  border-color: var(--accent);
+}
+
+.settingsLink {
+  color: var(--text-muted);
+  font-size: 12px;
+  text-decoration: underline;
+  cursor: pointer;
+  text-align: center;
+  margin-top: 10px;
+}

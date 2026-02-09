@@ -12,8 +12,9 @@
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
-  min-width: 380px;
-  max-width: 480px;
+  width: min(92vw, 640px);
+  min-width: 420px;
+  max-width: 640px;
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.4);
 }
 
@@ -47,6 +48,8 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
+  max-height: 72vh;
+  overflow-y: auto;
 }
 
 .info {
@@ -56,6 +59,67 @@
 
 .info strong {
   color: var(--text-primary);
+}
+
+.section {
+  margin-bottom: 8px;
+}
+
+.section h4 {
+  margin: 0 0 10px 0;
+  font-size: 13px;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.separator {
+  height: 1px;
+  background: var(--border-color);
+  margin: 12px 0;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin: 4px 0 0 0;
+  font-style: italic;
+}
+
+.preflight {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--bg-tertiary);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.actionBtn {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.actionBtn:hover:not(:disabled) {
+  background: var(--bg-primary);
+  border-color: var(--accent);
+}
+
+.actionBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .field {
@@ -71,7 +135,8 @@
 }
 
 .field select,
-.field input[type="number"] {
+.field input[type="number"],
+.field input[type="text"] {
   background: var(--bg-input);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
@@ -81,15 +146,24 @@
 }
 
 .field select {
-  min-width: 160px;
+  min-width: 220px;
 }
 
 .field input[type="number"] {
   width: 70px;
 }
 
+.field input[type="text"] {
+  min-width: 220px;
+}
+
 .field input[type="checkbox"] {
   accent-color: var(--accent);
+}
+
+.value {
+  font-size: 12px;
+  color: var(--text-primary);
 }
 
 .footer {
@@ -104,7 +178,8 @@
   background: var(--accent) !important;
   color: white;
   font-weight: 600;
-  padding: 6px 20px;
+  padding: 8px 20px;
+  margin-top: 10px;
 }
 
 .exportBtn:hover {

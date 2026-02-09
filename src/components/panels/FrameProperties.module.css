@@ -64,3 +64,27 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+.trimBtn {
+  margin: 8px;
+  width: calc(100% - 16px);
+  padding: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.trimBtn:hover:not(:disabled) {
+  background: var(--bg-hover);
+  border-color: var(--accent);
+}
+
+.trimBtn:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}

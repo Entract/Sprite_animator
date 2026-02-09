@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local SAM2 runtime artifacts
+tools/sam2-local/.venv/
+tools/sam2-local/checkpoints/
+tools/sam2-local/logs/
+tools/sam2-local/__pycache__/

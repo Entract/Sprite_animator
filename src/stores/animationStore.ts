@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import type { Animation, Frame } from '../types/animation';
 import { generateId } from '../utils/id';
 import { withHistory, type HistoryState } from './historyMiddleware';
+import { getBoundingBox, cropImage } from '../utils/imageProcessing';
 
 interface AnimationState {
   animations: Animation[];
@@ -21,6 +22,7 @@ interface AnimationState {
 
   setFps: (animationId: string, fps: number) => void;
   setLoop: (animationId: string, loop: boolean) => void;
+  trimAnimation: (animationId: string) => Promise<void>;
 
   getSelectedAnimation: () => Animation | null;
 }
@@ -175,6 +177,61 @@ export const useAnimationStore = create<AnimationState & HistoryState>(
       set((state) => ({
         animations: state.animations.map((a) =>
           a.id === animationId ? { ...a, loop } : a
+        ),
+      }));
+    },
+
+    trimAnimation: async (animationId) => {
+      const animation = get().animations.find((a) => a.id === animationId);
+      if (!animation || animation.frames.length === 0) return;
+
+      // 1. Calculate global bounding box
+      let globalMinX = Infinity;
+      let globalMinY = Infinity;
+      let globalMaxX = -Infinity;
+      let globalMaxY = -Infinity;
+      let foundAny = false;
+
+      const boxes = await Promise.all(
+        animation.frames.map((f) => getBoundingBox(f.imageData))
+      );
+
+      boxes.forEach((box) => {
+        if (box) {
+          globalMinX = Math.min(globalMinX, box.x);
+          globalMinY = Math.min(globalMinY, box.y);
+          globalMaxX = Math.max(globalMaxX, box.x + box.width - 1);
+          globalMaxY = Math.max(globalMaxY, box.y + box.height - 1);
+          foundAny = true;
+        }
+      });
+
+      if (!foundAny) return;
+
+      const finalRect = {
+        x: globalMinX,
+        y: globalMinY,
+        width: globalMaxX - globalMinX + 1,
+        height: globalMaxY - globalMinY + 1,
+      };
+
+      // 2. Crop all frames to this box
+      const croppedFrames = await Promise.all(
+        animation.frames.map(async (f) => {
+          const croppedData = await cropImage(f.imageData, finalRect);
+          return {
+            ...f,
+            imageData: croppedData,
+            width: finalRect.width,
+            height: finalRect.height,
+          };
+        })
+      );
+
+      // 3. Update store
+      set((state) => ({
+        animations: state.animations.map((a) =>
+          a.id === animationId ? { ...a, frames: croppedFrames } : a
         ),
       }));
     },

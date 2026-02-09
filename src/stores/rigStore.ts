@@ -1,14 +1,16 @@
 import { create } from 'zustand';
-import type { Skeleton, Bone, Attachment, RigAnimation, Keyframe } from '../types/skeleton';
+import type { Skeleton, Bone, Attachment, RigAnimation, Keyframe, IKConstraint } from '../types/skeleton';
 import { generateId } from '../utils/id';
 import { withHistory, type HistoryState } from './historyMiddleware';
 import { evaluateTrackAtTime } from '../engine/InterpolationEngine';
+import { applyAllIKConstraints } from '../engine/IKSolver';
 
 interface RigState {
   skeletons: Skeleton[];
   selectedSkeletonId: string | null;
   selectedBoneId: string | null;
-  
+  selectedIKConstraintId: string | null;
+
   // Animation Mode State
   selectedRigAnimationId: string | null;
   currentTime: number;
@@ -27,6 +29,12 @@ interface RigState {
 
   attachSpriteToBone: (skeletonId: string, boneId: string, attachment: Omit<Attachment, 'type'>) => void;
 
+  // IK Constraint Actions
+  addIKConstraint: (skeletonId: string, targetBoneId: string) => string;
+  updateIKConstraint: (skeletonId: string, constraintId: string, updates: Partial<IKConstraint>) => void;
+  removeIKConstraint: (skeletonId: string, constraintId: string) => void;
+  selectIKConstraint: (id: string | null) => void;
+
   // Animation Actions
   createRigAnimation: (skeletonId: string, name?: string) => string;
   selectRigAnimation: (id: string | null) => void;
@@ -37,6 +45,7 @@ interface RigState {
 
   getSelectedSkeleton: () => Skeleton | null;
   getSelectedRigAnimation: () => RigAnimation | null;
+  getSelectedIKConstraint: () => IKConstraint | null;
 }
 
 export const useRigStore = create<RigState & HistoryState>(
@@ -44,6 +53,7 @@ export const useRigStore = create<RigState & HistoryState>(
     skeletons: [],
     selectedSkeletonId: null,
     selectedBoneId: null,
+    selectedIKConstraintId: null,
     selectedRigAnimationId: null,
     currentTime: 0,
 
@@ -59,6 +69,7 @@ export const useRigStore = create<RigState & HistoryState>(
             bones: [],
             slots: [],
             skins: [],
+            ikConstraints: [],
             rigAnimations: [],
           },
         ],
@@ -109,8 +120,9 @@ export const useRigStore = create<RigState & HistoryState>(
           id: newId,
           name: `${source.name} (copy)`,
           bones: newBones,
-          slots: [], 
+          slots: [],
           skins: [],
+          ikConstraints: [],
           rigAnimations: []
         };
         
@@ -123,7 +135,7 @@ export const useRigStore = create<RigState & HistoryState>(
     },
 
     selectSkeleton: (id) => {
-      set({ selectedSkeletonId: id, selectedBoneId: null, selectedRigAnimationId: null, currentTime: 0 });
+      set({ selectedSkeletonId: id, selectedBoneId: null, selectedIKConstraintId: null, selectedRigAnimationId: null, currentTime: 0 });
     },
 
     selectBone: (id) => {
@@ -257,6 +269,109 @@ export const useRigStore = create<RigState & HistoryState>(
       }));
     },
 
+    // IK Constraint Implementation
+    addIKConstraint: (skeletonId, targetBoneId) => {
+      const id = generateId();
+      const state = get();
+      const skeleton = state.skeletons.find(s => s.id === skeletonId);
+      if (!skeleton) return id;
+
+      const bone = skeleton.bones.find(b => b.id === targetBoneId);
+      const boneName = bone?.name || 'Unknown';
+
+      // Calculate approximate world position of the bone's tip
+      // by walking up the parent chain
+      let worldX = 0;
+      let worldY = 0;
+      let worldRotation = 0;
+      const boneChain: typeof bone[] = [];
+      let current = bone;
+      while (current) {
+        boneChain.unshift(current);
+        current = current.parentId ? skeleton.bones.find(b => b.id === current!.parentId) : undefined;
+      }
+      for (const b of boneChain) {
+        if (!b) continue;
+        const rad = worldRotation * Math.PI / 180;
+        worldX += Math.cos(rad) * b.x - Math.sin(rad) * b.y;
+        worldY += Math.sin(rad) * b.x + Math.cos(rad) * b.y;
+        worldRotation += b.rotation;
+      }
+      // Add the bone length to get to the tip
+      if (bone) {
+        const rad = worldRotation * Math.PI / 180;
+        worldX += Math.cos(rad) * bone.length;
+        worldY += Math.sin(rad) * bone.length;
+      }
+
+      set((state) => ({
+        skeletons: state.skeletons.map((s) => {
+          if (s.id !== skeletonId) return s;
+          const newConstraint: IKConstraint = {
+            id,
+            name: `IK_${boneName}`,
+            targetBoneId,
+            chainLength: 2,
+            targetX: Math.round(worldX),
+            targetY: Math.round(worldY),
+            bendPositive: true,
+            mix: 1,
+            enabled: true,
+          };
+          return {
+            ...s,
+            ikConstraints: [...s.ikConstraints, newConstraint],
+          };
+        }),
+        selectedIKConstraintId: id,
+      }));
+      return id;
+    },
+
+    updateIKConstraint: (skeletonId, constraintId, updates) => {
+      set((state) => {
+        const skeleton = state.skeletons.find(s => s.id === skeletonId);
+        if (!skeleton) return state;
+
+        // Update the constraint
+        const updatedConstraints = skeleton.ikConstraints.map((c) =>
+          c.id === constraintId ? { ...c, ...updates } : c
+        );
+
+        // Re-apply IK with updated constraints
+        const updatedBones = applyAllIKConstraints(skeleton.bones, updatedConstraints);
+
+        return {
+          skeletons: state.skeletons.map((s) => {
+            if (s.id !== skeletonId) return s;
+            return {
+              ...s,
+              ikConstraints: updatedConstraints,
+              bones: updatedBones,
+            };
+          }),
+        };
+      });
+    },
+
+    removeIKConstraint: (skeletonId, constraintId) => {
+      set((state) => ({
+        skeletons: state.skeletons.map((s) => {
+          if (s.id !== skeletonId) return s;
+          return {
+            ...s,
+            ikConstraints: s.ikConstraints.filter((c) => c.id !== constraintId),
+          };
+        }),
+        selectedIKConstraintId:
+          state.selectedIKConstraintId === constraintId ? null : state.selectedIKConstraintId,
+      }));
+    },
+
+    selectIKConstraint: (id) => {
+      set({ selectedIKConstraintId: id, selectedBoneId: null });
+    },
+
     // Animation Implementation
     createRigAnimation: (skeletonId, name) => {
         const id = generateId();
@@ -303,7 +418,7 @@ export const useRigStore = create<RigState & HistoryState>(
         const state = get();
         const skeleton = state.skeletons.find(s => s.id === state.selectedSkeletonId);
         const anim = skeleton?.rigAnimations.find(a => a.id === state.selectedRigAnimationId);
-        
+
         if (!skeleton || !anim) {
             set({ currentTime: time });
             return;
@@ -311,8 +426,8 @@ export const useRigStore = create<RigState & HistoryState>(
 
         const newTime = Math.max(0, Math.min(anim.duration, time));
 
-        // Apply interpolation
-        const updatedBones = skeleton.bones.map(bone => {
+        // Apply keyframe interpolation
+        let updatedBones = skeleton.bones.map(bone => {
             const track = anim.tracks.find(t => t.boneId === bone.id);
             if (!track) return bone; // No keyframes for this bone
 
@@ -321,6 +436,11 @@ export const useRigStore = create<RigState & HistoryState>(
 
             return { ...bone, ...evalResult };
         });
+
+        // Apply IK constraints after keyframe interpolation
+        if (skeleton.ikConstraints && skeleton.ikConstraints.length > 0) {
+            updatedBones = applyAllIKConstraints(updatedBones, skeleton.ikConstraints);
+        }
 
         set(state => ({
             currentTime: newTime,
@@ -408,6 +528,13 @@ export const useRigStore = create<RigState & HistoryState>(
         const skel = state.skeletons.find((s) => s.id === state.selectedSkeletonId);
         if (!skel || !state.selectedRigAnimationId) return null;
         return skel.rigAnimations.find(a => a.id === state.selectedRigAnimationId) ?? null;
+    },
+
+    getSelectedIKConstraint: () => {
+        const state = get();
+        const skel = state.skeletons.find((s) => s.id === state.selectedSkeletonId);
+        if (!skel || !state.selectedIKConstraintId) return null;
+        return skel.ikConstraints.find(c => c.id === state.selectedIKConstraintId) ?? null;
     }
   }))
 );

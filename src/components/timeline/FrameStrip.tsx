@@ -1,4 +1,4 @@
-import { useRef, useCallback, useEffect, useState } from 'react';
+import { useRef, useCallback, useEffect, useState, useMemo } from 'react';
 import { useAnimationStore } from '../../stores/animationStore';
 import { useUIStore } from '../../stores/uiStore';
 import { loadImagesFromFiles } from '../../utils/imageLoader';
@@ -17,7 +17,7 @@ export function FrameStrip() {
   const setCurrentFrameIndex = useUIStore((s) => s.setCurrentFrameIndex);
 
   const animation = animations.find((a) => a.id === selectedAnimationId);
-  const frames = animation?.frames ?? [];
+  const frames = useMemo(() => animation?.frames ?? [], [animation?.frames]);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);

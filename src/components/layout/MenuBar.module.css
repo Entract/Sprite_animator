@@ -15,11 +15,30 @@
   gap: 16px;
 }
 
+.branding {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo {
+  height: 32px;
+  width: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
 .title {
   font-weight: 700;
-  font-size: 14px;
-  color: var(--text-accent);
-  letter-spacing: 0.5px;
+  font-size: 15px;
+  color: var(--text-primary);
+  letter-spacing: 0.2px;
+}
+
+.titleAccent {
+  color: var(--accent);
+  font-style: italic;
+  font-weight: 900;
 }
 
 .actions {
